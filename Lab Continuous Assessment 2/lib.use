@@ -1,0 +1,74 @@
+model Library_2025
+-- Nov 28, 2025
+
+class Book
+  attributes
+    title : String
+    author : String
+    publisher : String
+    no_copies : Integer
+    no_onshelf : Integer
+  operations
+    borrow()
+    begin
+      self.no_onshelf := self.no_onshelf - 1;
+    end
+end
+
+class Copy
+  attributes
+    status : String
+  operations
+    borrow( m : Member)
+    begin
+      self.status := 'onloan';
+      self.borrowed := m;
+    end
+end   
+
+class Member 
+  attributes 
+    name : String
+    student_id : String
+    address : String
+    no_onloan : Integer
+    fine : Integer
+  operations     
+    okToBorrow() : Boolean   -- returns true or false
+    begin
+      result := self.no_onloan < 2;
+    end
+
+    borrow(c : Copy)
+    begin
+      declare ok : Boolean;
+      ok := self.okToBorrow();
+      if ok then
+        self.no_onloan := self.no_onloan + 1;
+        c.borrow(self);
+      end
+    end           
+end    
+
+-- associations
+
+association CopyOf between
+    Copy[1..*] role copies
+    Book[1] role book
+end
+
+constraints
+-- 20 marks in total (2025)
+-- changes/modifications in the code:
+association HasBorrowed between
+    Member[0..1] role borrower
+	Copy[*] role borrowed
+end
+
+constraints
+context Member::borrow(c : Copy)
+  pre beforeBorrow1 : c.status <> 'onloan' --<> means not equal to 
+  pre beforeBorrow2: self.borrowed -> excludes(c)
+
+  post afterborrow1 : self.no_onloan > self.no_onloan@pre  
+  post afterborrow2 : self.borrowed -> includes(c)
